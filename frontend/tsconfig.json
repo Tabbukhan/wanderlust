@@ -12,8 +12,8 @@
     "types": ["node"],
 
     /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
+    "moduleResolution": "node",
+   
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
