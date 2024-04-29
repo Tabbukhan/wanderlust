@@ -12,7 +12,7 @@
     "types": ["node"],
 
     /* Bundler mode */
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
    
     "resolveJsonModule": true,
     "isolatedModules": true,
