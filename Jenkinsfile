@@ -23,12 +23,12 @@ pipeline {
             }
         }
         
-        /*stage('Sonar Quality GateScan'){
+        stage('Sonar Quality GateScan'){
             steps{
                 timeout(time: 2, unit: 'MINUTES')
                 waitForQualityGate abortPipeline: false
             }
-        }*/
+        }
         stage('Trivy File System Scan'){
             steps{
                 sh 'trivy fs --format table -o trivy-fs-report.html .'
