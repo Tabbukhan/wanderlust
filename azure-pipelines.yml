@@ -1,21 +1,33 @@
-# Node.js with React
-# Build a Node.js project that uses React.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 trigger:
 - main
 
+# Use a Microsoft-hosted agent
 pool:
-  vmImage: ubuntu-latest
+  name : Default
+
+variables:
+  imageName: webwander
+  acrLoginServer: wanderlustacr.azurecr.io
+  tag: latest
 
 steps:
+# Step 1: Install Node.js
 - task: NodeTool@0
   inputs:
     versionSpec: '20.x'
   displayName: 'Install Node.js'
 
+# Step 2: Install dependencies & build
 - script: |
     npm install
     npm run build
   displayName: 'npm install and build'
+
+# Step 3: Build and push Docker image to ACR
+- task: Docker@2
+  inputs:
+    containerRegistry: 'wandercn'   # ← exact service connection name
+    repository: $(acrLoginServer)/$(imageName)
+    command: buildAndPush
+    Dockerfile: '**/Dockerfile'
+    tags: $(tag)
