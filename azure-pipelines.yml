@@ -28,13 +28,13 @@ stages:
     - script: |
         echo "Installing npm dependencies"
         cd frontend
-        npm install
+        npm install --no-audit --no-fund
       displayName: 'Install dependencies'
 
     - script: |
         echo "Building Docker image"
         cd frontend
-        docker build --build-arg TS_MODULE=Node16 -t $(imageName):$(tag) .
+        docker build -t $(imageName):$(tag) .
       displayName: 'Build Docker image'
 
 - stage: Deploy
