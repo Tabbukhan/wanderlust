@@ -3,22 +3,27 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json first (better caching)
+# Copy package.json and package-lock.json first (for caching)
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies without running audit/fund
+RUN npm install --no-audit --no-fund
 
 # Copy the rest of the frontend code
 COPY . .
 
-# Build the app (will create /app/build for React or /app/dist for Vue/Angular)
+# Build the frontend
 RUN npm run build
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
 
-# Copy built frontend files from build stage to nginx web root
+# Remove default Nginx static files
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy build output from previous stage
+# If Vite outputs to 'dist' (default) or 'build' (React), copy whichever exists
+COPY --from=build /app/dist /usr/share/nginx/html
 COPY --from=build /app/build /usr/share/nginx/html
 
 # Expose port 80
