@@ -3,16 +3,16 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json first (for caching)
+# Copy package.json and package-lock.json first (caching)
 COPY package*.json ./
 
-# Install dependencies without running audit/fund
+# Install dependencies (skip audit/funding for CI speed)
 RUN npm install --no-audit --no-fund
 
-# Copy the rest of the frontend code
+# Copy all frontend code
 COPY . .
 
-# Build the frontend
+# Build frontend using Vite (handles TS + aliases)
 RUN npm run build
 
 # Stage 2: Serve with Nginx
@@ -21,10 +21,8 @@ FROM nginx:alpine
 # Remove default Nginx static files
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy build output from previous stage
-# If Vite outputs to 'dist' (default) or 'build' (React), copy whichever exists
+# Copy build output (Vite outputs to dist/)
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY --from=build /app/build /usr/share/nginx/html
 
 # Expose port 80
 EXPOSE 80
