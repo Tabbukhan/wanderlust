@@ -4,12 +4,12 @@ trigger:
       - main
 
 pool:
-  name: Default   # Your self-hosted agent pool
+  name: Default  # your self-hosted agent
+  # vmImage: 'ubuntu-latest' if using Microsoft-hosted agent
 
 variables:
   imageName: webwander
   tag: latest
-  dockerRegistry: ''
 
 stages:
 - stage: Build
@@ -27,19 +27,16 @@ stages:
       clean: true
 
     - script: |
-        echo "Installing dependencies"
-        cd frontend
-        npm install
-      displayName: 'Install npm dependencies'
-
-    - script: |
         echo "Building Docker image"
-        cd frontend
-        # Build with temporary override of TS module option
-        docker build \
-          --build-arg TS_MODULE=Node16 \
-          -t $(imageName):$(tag) .
+        docker build -t $(imageName):$(tag) .
       displayName: 'Build Docker image'
+
+    # Optional push to registry
+    # - script: |
+    #     docker login -u <username> -p <password> docker.io
+    #     docker tag $(imageName):$(tag) <username>/$(imageName):$(tag)
+    #     docker push <username>/$(imageName):$(tag)
+    #   displayName: 'Push Docker image'
 
 - stage: Deploy
   displayName: Deploy Stage
