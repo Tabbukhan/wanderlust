@@ -1,31 +1,74 @@
+# azure-pipelines.yml
 trigger:
-- main
+  branches:
+    include:
+      - main
 
 pool:
-  name: Default
+  name: Default   # Your self-hosted agent pool
+  # If you switch to hosted agent, use:
+  # vmImage: 'ubuntu-latest'
 
 variables:
   imageName: webwander
-  acrLoginServer: wanderlustacr.azurecr.io
   tag: latest
+  dockerRegistry: ''  # If pushing to Docker Hub: e.g., tabbukhan/webwander
 
-steps:
-# Step 1: Install Node.js
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'
-  displayName: 'Install Node.js'
+stages:
+- stage: Build
+  displayName: Build Stage
+  jobs:
+  - job: BuildDockerImage
+    displayName: Build Docker Image
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '20.x'
+      displayName: 'Install Node.js'
 
-- script: docker info
-  displayName: 'Check Docker access'
+    - checkout: self
+      clean: true
 
+    - script: |
+        echo "Installing dependencies"
+        cd frontend
+        npm install
+      displayName: 'Install npm dependencies'
 
-# Step 3: Build and push Docker image to ACR
-- task: Docker@2
-  inputs:
-    containerRegistry: 'wandercn'   # ← your Azure service connection name
-    repository: $(acrLoginServer)/$(imageName)
-    command: buildAndPush
-    Dockerfile: frontend/Dockerfile
-    buildContext: frontend
-    tags: $(tag)
+    - script: |
+        echo "Building React app"
+        cd frontend
+        npm run build
+      displayName: 'Build React app'
+
+    - script: |
+        echo "Building Docker image"
+        cd frontend
+        docker build -t $(imageName):$(tag) .
+      displayName: 'Build Docker image'
+
+    # Optional: push to Docker Hub / Azure Container Registry
+    # - script: |
+    #     echo "Pushing Docker image"
+    #     docker login -u <username> -p <password> docker.io
+    #     docker tag $(imageName):$(tag) $(dockerRegistry):$(tag)
+    #     docker push $(dockerRegistry):$(tag)
+    #   displayName: 'Push Docker image'
+
+- stage: Deploy
+  displayName: Deploy Stage
+  dependsOn: Build
+  jobs:
+  - job: RunContainer
+    displayName: Deploy Docker Container
+    steps:
+    - script: |
+        echo "Stopping existing container (if any)"
+        docker stop $(imageName) || true
+        docker rm $(imageName) || true
+      displayName: 'Stop old container'
+
+    - script: |
+        echo "Running Docker container"
+        docker run -d -p 80:80 --name $(imageName) $(imageName):$(tag)
+      displayName: 'Run Docker container'
