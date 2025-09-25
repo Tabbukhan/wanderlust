@@ -4,14 +4,11 @@ trigger:
       - main
 
 pool:
-  name: Default   # Your self-hosted agent pool
-  # If you switch to hosted agent, use:
-  # vmImage: 'ubuntu-latest'
+  name: Default  # Your self-hosted agent pool
 
 variables:
   imageName: webwander
   tag: latest
-  dockerRegistry: ''  # If pushing to Docker Hub: e.g., tabbukhan/webwander
 
 stages:
 - stage: Build
@@ -29,23 +26,16 @@ stages:
       clean: true
 
     - script: |
-        echo "Installing dependencies"
+        echo "Installing npm dependencies"
         cd frontend
         npm install
-      displayName: 'Install npm dependencies'
+      displayName: 'Install dependencies'
 
     - script: |
         echo "Building Docker image"
-        docker build -f frontend/Dockerfile -t $(imageName):$(tag) frontend
+        cd frontend
+        docker build --build-arg TS_MODULE=Node16 -t $(imageName):$(tag) .
       displayName: 'Build Docker image'
-
-    # Optional: push to Docker Hub / Azure Container Registry
-    # - script: |
-    #     echo "Pushing Docker image"
-    #     docker login -u <username> -p <password> docker.io
-    #     docker tag $(imageName):$(tag) $(dockerRegistry):$(tag)
-    #     docker push $(dockerRegistry):$(tag)
-    #   displayName: 'Push Docker image'
 
 - stage: Deploy
   displayName: Deploy Stage
@@ -55,7 +45,7 @@ stages:
     displayName: Deploy Docker Container
     steps:
     - script: |
-        echo "Stopping existing container (if any)"
+        echo "Stopping old container (if any)"
         docker stop $(imageName) || true
         docker rm $(imageName) || true
       displayName: 'Stop old container'
