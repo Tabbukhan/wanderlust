@@ -1,7 +1,6 @@
 trigger:
 - main
 
-# Use a Microsoft-hosted agent
 pool:
   name: Default
 
