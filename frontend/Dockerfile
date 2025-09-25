@@ -3,28 +3,24 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Copy package.json and install dependencies
+# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install --no-audit --no-fund
 
-# Copy all source files
+# Copy the rest of the code
 COPY . .
 
-# Build argument for TS module
+# Set TS module resolution for Node16 without changing repo
 ARG TS_MODULE=Node16
 
-# Build the project
+# Build with TS module override
 RUN npx tsc -p tsconfig.prod.json --module $TS_MODULE --skipLibCheck --noEmitOnError false \
     && npm run vite build
 
-# Stage 2: Production image
-FROM nginx:alpine
+# Stage 2: Production
+FROM nginx:alpine AS prod
 
-# Copy built files to nginx html folder
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Expose port 80
 EXPOSE 80
-
-# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
