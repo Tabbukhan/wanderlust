@@ -19,6 +19,7 @@ steps:
 
 # Step 2: Install dependencies & build
 - script: |
+    cd frontend
     npm install
     npm run build
   displayName: 'npm install and build'
